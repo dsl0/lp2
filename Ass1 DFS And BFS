@@ -1,306 +1,44 @@
-# ============================================================
-#   Graph Traversal: DFS & BFS — User Input Version
-#   Undirected Graph Implementation
-# ============================================================
+#BFS 
 
 from collections import deque
-
-
-# ── Build Graph from User Input ──────────────────────────────
-def build_graph():
-    graph = {}
-
-    print("=" * 55)
-    print("       Graph Traversal: DFS & BFS")
-    print("=" * 55)
-
-    # Step 1: Get nodes
-    print("\nStep 1: Enter all node names (space-separated)")
-    print("  Example: A B C D E")
-    nodes = input("  Nodes: ").strip().upper().split()
-
-    if not nodes:
-        print("  No nodes entered. Exiting.")
-        exit()
-
-    for node in nodes:
-        graph[node] = []
-
-    # Step 2: Get edges
-    print(f"\nStep 2: Enter edges as pairs (e.g. A B means A connected to B)")
-    print(f"  Type 'done' when finished.")
-    print(f"  Available nodes: {nodes}")
-
-    while True:
-        edge = input("  Edge (u v): ").strip().upper()
-        if edge == 'DONE':
-            break
-        parts = edge.split()
-        if len(parts) != 2:
-            print("  ✗ Enter exactly two node names. Try again.")
-            continue
-        u, v = parts
-        if u not in graph or v not in graph:
-            print(f"  ✗ One or both nodes not found. Choose from: {nodes}")
-            continue
-        if v not in graph[u]:
-            graph[u].append(v)
-        if u not in graph[v]:
-            graph[v].append(u)
-        print(f"  ✓ Edge {u} — {v} added.")
-
-    return graph, nodes
-
-
-# ── DFS Recursive ────────────────────────────────────────────
-def dfs_recursive(graph, node, visited=None, order=None):
-    if visited is None:
-        visited = set()
-    if order is None:
-        order = []
-
-    visited.add(node)
-    order.append(node)
-
-    for neighbour in graph[node]:
-        if neighbour not in visited:
-            dfs_recursive(graph, neighbour, visited, order)
-
-    return order
-
-
-# ── DFS Iterative ────────────────────────────────────────────
-def dfs_iterative(graph, start):
+def bfs(graph, start):
     visited = set()
-    stack   = [start]
-    order   = []
-
-    while stack:
-        node = stack.pop()
-        if node not in visited:
-            visited.add(node)
-            order.append(node)
-            for neighbour in reversed(graph[node]):
-                if neighbour not in visited:
-                    stack.append(neighbour)
-
-    return order
-
-
-# ── BFS Iterative ────────────────────────────────────────────
-def bfs_iterative(graph, start):
-    visited = set([start])
-    queue   = deque([start])
-    order   = []
-
+    queue = deque([start])
+    print("BFS Traversal:", end=" ")
     while queue:
         node = queue.popleft()
-        order.append(node)
-        for neighbour in graph[node]:
-            if neighbour not in visited:
-                visited.add(neighbour)
-                queue.append(neighbour)
+        if node not in visited:
+            print(node, end=" ")
+            visited.add(node)
+            for neighbour in graph[node]:
+                if neighbour not in visited:
+                    queue.append(neighbour)
+# Example graph
+graph = {  'A': ['B', 'C'], 'B': ['D', 'E'], 'C': ['F'],'D': [],'E': [],'F': []}
+bfs(graph, 'A')
 
-    return order
+#DFS 
 
-
-# ── BFS Recursive ────────────────────────────────────────────
-def bfs_recursive(graph, queue, visited, order=None):
-    if order is None:
-        order = []
-    if not queue:
-        return order
-
-    node = queue.popleft()
-    order.append(node)
-
-    for neighbour in graph[node]:
-        if neighbour not in visited:
-            visited.add(neighbour)
-            queue.append(neighbour)
-
-    return bfs_recursive(graph, queue, visited, order)
-
-
-# ── DFS Path Finding ─────────────────────────────────────────
-def dfs_find_path(graph, start, goal, visited=None, path=None):
+def dfs(graph, start, visited=None):
     if visited is None:
         visited = set()
-    if path is None:
-        path = []
 
+    print(start, end=" ")
     visited.add(start)
-    path = path + [start]
-
-    if start == goal:
-        return path
 
     for neighbour in graph[start]:
         if neighbour not in visited:
-            result = dfs_find_path(graph, neighbour, goal, visited, path)
-            if result:
-                return result
+            dfs(graph, neighbour, visited)
 
-    return None
+# Example graph
+graph = {
+    'A': ['B', 'C'],
+    'B': ['D', 'E'],
+    'C': ['F'],
+    'D': [],
+    'E': [],
+    'F': []
+}
 
-
-# ── BFS Shortest Path ────────────────────────────────────────
-def bfs_shortest_path(graph, start, goal):
-    if start == goal:
-        return [start]
-
-    visited = set([start])
-    queue   = deque([[start]])
-
-    while queue:
-        path = queue.popleft()
-        node = path[-1]
-        for neighbour in graph[node]:
-            if neighbour not in visited:
-                new_path = path + [neighbour]
-                if neighbour == goal:
-                    return new_path
-                visited.add(neighbour)
-                queue.append(new_path)
-
-    return None
-
-
-# ── Cycle Detection ──────────────────────────────────────────
-def has_cycle(graph, node, visited=None, parent=None):
-    if visited is None:
-        visited = set()
-
-    visited.add(node)
-
-    for neighbour in graph[node]:
-        if neighbour not in visited:
-            if has_cycle(graph, neighbour, visited, node):
-                return True
-        elif neighbour != parent:
-            return True
-
-    return False
-
-
-# ── Connected Components ─────────────────────────────────────
-def connected_components(graph):
-    visited    = set()
-    components = []
-
-    for node in graph:
-        if node not in visited:
-            component = dfs_recursive(graph, node, visited)
-            components.append(component)
-
-    return components
-
-
-# ── Display Graph ────────────────────────────────────────────
-def display_graph(graph):
-    print("\n  Adjacency list:")
-    for node, neighbours in graph.items():
-        print(f"    {node} → {neighbours if neighbours else '(no connections)'}")
-
-
-# ── Get Start Node from User ─────────────────────────────────
-def get_start_node(graph, label="start"):
-    nodes = list(graph.keys())
-    while True:
-        node = input(f"  Enter {label} node {nodes}: ").strip().upper()
-        if node in graph:
-            return node
-        print(f"  ✗ '{node}' not found. Choose from: {nodes}")
-
-
-# ── Main Menu ────────────────────────────────────────────────
-def main():
-    graph, nodes = build_graph()
-    display_graph(graph)
-
-    while True:
-        print("\n" + "─" * 55)
-        print("  What would you like to do?")
-        print("  1. DFS Recursive traversal")
-        print("  2. DFS Iterative traversal")
-        print("  3. BFS Iterative traversal")
-        print("  4. BFS Recursive traversal")
-        print("  5. Find a path (DFS)")
-        print("  6. Find shortest path (BFS)")
-        print("  7. Detect cycle")
-        print("  8. Find connected components")
-        print("  9. Show graph")
-        print("  0. Exit")
-        print("─" * 55)
-
-        choice = input("  Choice: ").strip()
-
-        if choice == '1':
-            start = get_start_node(graph)
-            result = dfs_recursive(graph, start)
-            print(f"\n  DFS Recursive from {start}:")
-            print(f"  Order: {' → '.join(result)}")
-
-        elif choice == '2':
-            start = get_start_node(graph)
-            result = dfs_iterative(graph, start)
-            print(f"\n  DFS Iterative from {start}:")
-            print(f"  Order: {' → '.join(result)}")
-
-        elif choice == '3':
-            start = get_start_node(graph)
-            result = bfs_iterative(graph, start)
-            print(f"\n  BFS Iterative from {start}:")
-            print(f"  Order: {' → '.join(result)}")
-
-        elif choice == '4':
-            start = get_start_node(graph)
-            result = bfs_recursive(graph, deque([start]), set([start]))
-            print(f"\n  BFS Recursive from {start}:")
-            print(f"  Order: {' → '.join(result)}")
-
-        elif choice == '5':
-            print("\n  DFS Path Finder")
-            start = get_start_node(graph, "start")
-            goal  = get_start_node(graph, "goal")
-            path  = dfs_find_path(graph, start, goal)
-            if path:
-                print(f"  Path from {start} to {goal}: {' → '.join(path)}")
-            else:
-                print(f"  No path found from {start} to {goal}.")
-
-        elif choice == '6':
-            print("\n  BFS Shortest Path Finder")
-            start = get_start_node(graph, "start")
-            goal  = get_start_node(graph, "goal")
-            path  = bfs_shortest_path(graph, start, goal)
-            if path:
-                print(f"  Shortest path from {start} to {goal}: {' → '.join(path)}")
-                print(f"  Hops: {len(path) - 1}")
-            else:
-                print(f"  No path found from {start} to {goal}.")
-
-        elif choice == '7':
-            start = get_start_node(graph)
-            cycle = has_cycle(graph, start)
-            print(f"\n  Cycle detected: {'Yes' if cycle else 'No'}")
-
-        elif choice == '8':
-            components = connected_components(graph)
-            print(f"\n  Connected components: {len(components)}")
-            for i, comp in enumerate(components, 1):
-                print(f"    Component {i}: {comp}")
-
-        elif choice == '9':
-            display_graph(graph)
-
-        elif choice == '0':
-            print("\n  Goodbye!")
-            break
-
-        else:
-            print("  ✗ Invalid choice. Enter a number from 0–9.")
-
-
-if __name__ == "__main__":
-    main()
+print("DFS Traversal:", end=" ")
+dfs(graph, 'A')
