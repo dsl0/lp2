@@ -1,114 +1,34 @@
-import heapq
-
-# Goal state
-GOAL_STATE = [
-    [1, 2, 3],
-    [4, 5, 6],
-    [7, 8, 0]
-]
-
-# Directions: Up, Down, Left, Right
-MOVES = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-
-
-# Heuristic function: Manhattan Distance
-def heuristic(state):
-    distance = 0
-    for i in range(3):
-        for j in range(3):
-            value = state[i][j]
-            if value != 0:
-                goal_x = (value - 1) // 3
-                goal_y = (value - 1) % 3
-                distance += abs(i - goal_x) + abs(j - goal_y)
-    return distance
-
-
-# Find position of zero (empty tile)
-def find_zero(state):
-    for i in range(3):
-        for j in range(3):
-            if state[i][j] == 0:
-                return i, j
-
-
-# Generate neighbors
-def get_neighbors(state):
-    neighbors = []
-    x, y = find_zero(state)
-
-    for dx, dy in MOVES:
-        nx, ny = x + dx, y + dy
-        if 0 <= nx < 3 and 0 <= ny < 3:
-            new_state = [row[:] for row in state]
-            new_state[x][y], new_state[nx][ny] = new_state[nx][ny], new_state[x][y]
-            neighbors.append(new_state)
-
-    return neighbors
-
-
-# Convert state to tuple (for hashing)
-def to_tuple(state):
-    return tuple(tuple(row) for row in state)
-
-
-# A* Algorithm
-def a_star(start):
-    open_list = []
-    heapq.heappush(open_list, (0, start))
-
-    g_cost = {to_tuple(start): 0}
-    parent = {to_tuple(start): None}
+def astar(graph, heuristic, start, goal):
+    open_list = [(0, start)]
+    cost = {start: 0}
+    parent = {start: None}
 
     while open_list:
-        _, current = heapq.heappop(open_list)
+        open_list.sort()
+        current_cost, current = open_list.pop(0)
 
-        if current == GOAL_STATE:
-            return reconstruct_path(parent, current)
+        if current == goal:
+            path = []
+            while current:
+                path.append(current)
+                current = parent[current]
+            return path[::-1]
 
-        for neighbor in get_neighbors(current):
-            neighbor_tuple = to_tuple(neighbor)
-            tentative_g = g_cost[to_tuple(current)] + 1
+        for neighbour, weight in graph[current]:
+            new_cost = cost[current] + weight
+            if neighbour not in cost or new_cost < cost[neighbour]:
+                cost[neighbour] = new_cost
+                priority = new_cost + heuristic[neighbour]
+                open_list.append((priority, neighbour))
+                parent[neighbour] = current
 
-            if neighbor_tuple not in g_cost or tentative_g < g_cost[neighbor_tuple]:
-                g_cost[neighbor_tuple] = tentative_g
-                f_cost = tentative_g + heuristic(neighbor)
-                heapq.heappush(open_list, (f_cost, neighbor))
-                parent[neighbor_tuple] = current
+graph = {
+    'A':[('B',1),('C',3)],
+    'B':[('D',1)],
+    'C':[('D',1)],
+    'D':[]
+}
 
-    return None
+heuristic = {'A':3,'B':2,'C':1,'D':0}
 
-
-# Reconstruct path
-def reconstruct_path(parent, current):
-    path = []
-    while current:
-        path.append(current)
-        current = parent[to_tuple(current)]
-    return path[::-1]
-
-
-# Print state nicely
-def print_state(state):
-    for row in state:
-        print(row)
-    print()
-
-
-# Example start state
-start_state = [
-    [1, 2, 3],
-    [4, 0, 6],
-    [7, 5, 8]
-]
-
-# Run A*
-solution = a_star(start_state)
-
-# Output
-if solution:
-    print("Solution found in", len(solution) - 1, "steps:\n")
-    for step in solution:
-        print_state(step)
-else:
-    print("No solution found.")
+print("A* Path:", astar(graph, heuristic, 'A', 'D'))
