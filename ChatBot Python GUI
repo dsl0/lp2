@@ -1,78 +1,68 @@
-import tkinter as tk
-from tkinter import scrolledtext
-import random
-import datetime
+!pip install nltk
 
-# Chatbot intents
+
+import random
+from difflib import get_close_matches
+
 intents = {
     "greeting": {
-        "patterns": ["hi", "hello", "hey"],
-        "responses": ["Hello!", "Hi there!", "Hey! How can I help you?"]
+        "patterns": ["hi", "hello", "hey", "hii", "heyy", "yo", "sup"],
+        "responses": ["Hello!", "Hi there!", "How can I help you?"]
     },
     "goodbye": {
-        "patterns": ["bye", "goodbye"],
-        "responses": ["Goodbye!", "Take care!", "See you soon!"]
+        "patterns": ["bye", "goodbye", "see you", "later"],
+        "responses": ["Goodbye!", "Take care!"]
     },
     "ai": {
-        "patterns": ["what is ai", "define ai"],
+        "patterns": ["what is ai", "define ai", "artificial intelligence", "ai meaning"],
         "responses": ["Artificial Intelligence is the simulation of human intelligence in machines."]
     },
     "thanks": {
-        "patterns": ["thanks", "thank you"],
-        "responses": ["You're welcome!", "Happy to help!", "Anytime!"]
-    },
-    "joke": {
-        "patterns": ["joke", "tell me a joke"],
-        "responses": [
-            "Why do programmers prefer dark mode? Because light attracts bugs 😆",
-            "Why was the computer cold? It left its Windows open 😂"
-        ]
+        "patterns": ["thanks", "thank you", "thx"],
+        "responses": ["You're welcome!", "Happy to help!"]
     }
 }
 
-# Chatbot function
+fallbacks = {
+    "ai_deep": [
+        "I'm still learning advanced AI topics.",
+        "That's a deeper AI concept — I'm not trained on that yet."
+    ],
+    "unknown": [
+        "I didn't quite get that. Can you rephrase?",
+        "Not sure I understand. Ask something else?"
+    ]
+}
+
+def clean_input(text):
+    return text.lower().strip()
+
+def match_pattern(user_input, patterns):
+    match = get_close_matches(user_input, patterns, n=1, cutoff=0.6)
+    return match[0] if match else None
+
 def chatbot(user_input):
-    user_input = user_input.lower()
-
-    if "time" in user_input:
-        return "Current time is " + datetime.datetime.now().strftime("%H:%M:%S")
-
-    if "date" in user_input:
-        return "Today's date is " + str(datetime.date.today())
+    user_input = clean_input(user_input)
+    words = user_input.split()
 
     for intent in intents.values():
         for pattern in intent["patterns"]:
-            if pattern in user_input:
+            if pattern in user_input or pattern in words:
                 return random.choice(intent["responses"])
+        match = match_pattern(user_input, intent["patterns"])
+        if match:
+            return random.choice(intent["responses"])
 
-    return "Sorry, I didn't understand that."
+    if "ai" in user_input or "intelligence" in user_input:
+        return random.choice(fallbacks["ai_deep"])
 
-# Send message function
-def send_message():
-    user_message = entry_box.get()
-    if user_message.strip() == "":
-        return
+    return random.choice(fallbacks["unknown"])
 
-    chat_area.insert(tk.END, "You: " + user_message + "\n")
-    bot_response = chatbot(user_message)
-    chat_area.insert(tk.END, "Bot: " + bot_response + "\n\n")
+print("Chatbot started (type 'bye' to exit)")
 
-    entry_box.delete(0, tk.END)
-    chat_area.yview(tk.END)
-
-# GUI setup
-window = tk.Tk()
-window.title("Python Chatbot")
-window.geometry("500x500")
-
-chat_area = scrolledtext.ScrolledText(window, wrap=tk.WORD, width=60, height=20)
-chat_area.pack(pady=10)
-chat_area.config(state='normal')
-
-entry_box = tk.Entry(window, width=40)
-entry_box.pack(side=tk.LEFT, padx=10, pady=10)
-
-send_button = tk.Button(window, text="Send", command=send_message)
-send_button.pack(side=tk.LEFT, pady=10)
-
-window.mainloop()
+while True:
+    msg = input("You: ")
+    if msg.lower() == "bye":
+        print("Bot: Goodbye!")
+        break
+    print("Bot:", chatbot(msg))
